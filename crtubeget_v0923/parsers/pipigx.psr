@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<parser delay="500" crpj="true" date="2023.10.25">
+    <url><![CDATA[https?://(?:h5\.)?pipigx\.com/pp/post/(?<id>[^/?]+)]]></url>
+    <title><![CDATA[title="([^"]+)"]]></title>
+    <thumbnail><![CDATA[thumbnail=([^,]+)]]></thumbnail>
+    <duration><![CDATA[duration=([^,]+)]]></duration>
+    <mediaUrl><![CDATA[cr_video_url=([^\$]+)]]></mediaUrl>
+    <jsCode><![CDATA[
+        try {
+            //https://h5.pipigx.com/pp/post/761703608296?zy_to=copy_link&share_count=1&m=5be42415d1f46b44d78b32405371860c&app=&type=post&did=b7a4cb55262c325b&mid=8253467714105&pid=761703608296
+            var title = '', thumbnail = '', duration = 0, video_url = '';
+            var url = window.external.url;
+            var pid = url.match(/post\/([^/?]+)/)[1];
+            var args = '{\"pid\":' + pid + ',\"type\":\"post\"}';
+            var api_url = 'https://h5.pipigx.com/ppapi/share/fetch_content';
+            var data = window.external.getPostResult(api_url, args);
+            var jo = JSON.parse(data);
+            var item = jo.data.post;
+            title = item.content;
+            thumbnail = 'https://file.ippzone.com/img/frame/id/' + item.imgs[0].id;
+            duration = data.match(/\"dur\":\s*([^,]+)/)[1];
+            video_url = data.match(/\"url\":\s*\"([^\"]+)/)[1];
+            document.body.innerHTML = 'title=\"' + title + '\",thumbnail=' + thumbnail + ',duration=' + duration + ', cr_video_url=' + video_url + '$'; '$';
+        }
+        catch (ex) {
+        }
+    ]]></jsCode>
+</parser>

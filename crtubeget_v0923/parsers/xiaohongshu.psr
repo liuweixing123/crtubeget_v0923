@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="utf-8"?>
+<parser delay="2500" crpj="true" delegate="true" date="2023.10.18">
+    <url><![CDATA[https?://(?:www\.)?(?:xiaohongshu|xhslink)\.com/(?:discovery/item/|explore/)?(?<id>\w+)]]></url>
+    <title><![CDATA[title="([^"]+)]]></title>
+    <thumbnail><![CDATA[thumbnail=([^,]+)]]></thumbnail>
+    <duration><![CDATA[duration=([^,]+)]]></duration>
+    <mediaUrl><![CDATA[cr_video_url=([^\$]+)]]></mediaUrl>
+    <imageUrl><![CDATA[cr_image_url=([^\$]+)]]></imageUrl>
+    <ckSign><![CDATA[web_session]]></ckSign>
+    <exjs><![CDATA[http://www.cr-soft.net/js/xhsign.js]]></exjs>
+    <jsCode><![CDATA[
+        try {
+            //http://xhslink.com/iXI9wb
+            //http://xhslink.com/UzPVvm
+            //https://www.xiaohongshu.com/explore/639bd054000000002203ab9f
+            //https://www.xiaohongshu.com/explore/65267d50000000001e023a90 我本无意入江南
+            //http://xhslink.com/UPEBCr 图集
+            //https://www.xiaohongshu.com/explore/650277cd000000001e00dce5 图集
+            var title = '', thumbnail = '', duration = 0, video_url = '', image_url = '';
+            var url = window.external.url;
+            if (!url.match(/\/(\w{24})/)) {
+                var ua = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/109.0.0.0 Safari/537.36';
+                //它可能跳到login页
+                var r_url = window.external.getRedirectedUrl(url, '', ua);
+                if (r_url.match(/\/(\w{24})/))
+                    url = r_url;
+            }
+            var cookie = window.external.getCookieEx(url, 'web_session');
+            var headers = 'Cookie: ' + cookie;
+            var html = window.external.getHtmlCodeEx(url, headers);
+            if (html.indexOf('window.__INITIAL_STATE__=') != -1) {
+                //避免意外字串，不再直取note字串
+                var js = html.match(/__INITIAL_STATE__=([^<]+)/)[1];
+                js = js.replace(/\\u002F/g, '/').replace(/undefined/g, '\"\"');
+                var jo = JSON.parse(js);
+                var note = undefined;
+                for (var n in jo.note.noteDetailMap) {
+                    if (jo.note.noteDetailMap[n].note) {
+                        note = jo.note.noteDetailMap[n].note;
+                        break;
+                    }
+                }
+                title = note.title || note.desc;
+                if (note.imageList.length != 0 && note.imageList[0].infoList.length != 0) {
+                    var il = note.imageList[0].infoList;
+                    thumbnail = il[il.length - 1].url;
+                }
+                if (note.video) {
+                    var media = note.video.media;
+                    duration = media.video.duration;
+                    if (media.stream.h264.length != 0)
+                        video_url = media.stream.h264[0].masterUrl;
+                    else if (media.stream.h265.length != 0)
+                        video_url = media.stream.h265[0].masterUrl;
+                    //original...qc: 403
+                    if (video_url && video_url.indexOf('sign=') == -1 && note.video.consumer && note.video.consumer.originVideoKey)
+                        video_url = video_url.match(/https?:\/\/.*?\//)[0] + note.video.consumer.originVideoKey;
+                }
+                else if (note.imageList.length != 0 && note.imageList[0].infoList.length != 0) {
+                    var il = note.imageList[0].infoList;
+                    video_url = il[il.length - 1].url + '#0.jpg';
+                    for (var i = 1; i <= note.imageList.length - 1; i++) {
+                        il = note.imageList[i].infoList;
+                        if (!image_url)
+                            image_url = il[il.length - 1].url + '#' + i + '.jpg';
+                        else
+                            image_url += '|' + il[il.length - 1].url + '#' + i + '.jpg';
+                    }
+                }
+            }
+            //...
+            if ((!video_url || video_url.indexOf('_259') != -1) && (fv[0] != '1' || em)) {
+                data = gvd(url);
+                //特殊字符替换
+                data = data.replace(/\s/g, ' ');
+                var jo = JSON.parse(data);
+                if (jo.body) {
+                    title = jo.body.title;
+                    //http://xhslink.com/kwJN9h
+                    if (title.indexOf('|') != -1)
+                        title = title.substring(0, title.indexOf('|'));
+                    thumbnail = jo.body.cover_url;
+                    if (jo.body.video_url)
+                        video_url = jo.body.video_url;
+                    else if (jo.body.images && jo.body.images.length > 1) {
+                        video_url = jo.body.images[0] + '#0.jpg';
+                        for (var i = 1; i <= jo.body.images.length - 1; i++) {
+                            if (!image_url)
+                                image_url = jo.body.images[i] + '#' + i + '.jpg';
+                            else
+                                image_url += '|' + jo.body.images[i] + '#' + i + '.jpg';
+                        }
+                    }
+                }
+            }
+            document.body.innerHTML = 'title=\"' + title + '\",thumbnail=' + thumbnail + ',duration=' + duration + ',cr_video_url=' + video_url + '$cr_image_url=' + image_url + '$';
+        }
+        catch (ex) {
+        }
+    ]]></jsCode>
+</parser>

@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<parser delay="500" crpj="true" date="2023.10.29">
+    <url><![CDATA[https?://(?:www\.)?qhtb\.cn/[^/]+/(?!dshj).*/(?<id>\d+)\.html?]]></url>
+    <title><![CDATA[title="([^"]+)"]]></title>
+    <thumbnail><![CDATA[]]></thumbnail>
+    <duration><![CDATA[]]></duration>
+    <mediaUrl><![CDATA[cr_video_url=([^\$]+)]]></mediaUrl>
+    <jsCode><![CDATA[
+        try {
+            //wx Tel要
+            //http://www.qhtb.cn/yshj/dy/2021-07-20/1217421.html
+            //http://www.qhtb.cn/news/cctvnew/2023-10-24/1311675.html
+            //http://www.qhtb.cn/yshj/dshj/2022-01-20/1239818.html 剧集，以列表解析
+            var title = m2oContentInfo.content_title;
+            var html = document.body.innerHTML;
+            var video_url = html.match(/http.*?\.m(?:p4|3u8)/)[0];
+            document.body.innerHTML = 'title=""' + title + '"",cr_video_url=' + video_url + '$' + html;
+        }
+        catch (ex) {
+        }
+    ]]></jsCode>
+</parser>

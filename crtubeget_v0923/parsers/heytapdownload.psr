@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<parser delay="1500" crpj="true" date="2023.10.17">
+    <url><![CDATA[(?:heytapdownload.com|opdwz.cn)/(?:document|feeds)/(?<id>[^.?]+)]]></url>
+    <title><![CDATA[title="([^"]+)"]]></title>
+    <thumbnail><![CDATA[thumbnail=([^,]+)]]></thumbnail>
+    <duration><![CDATA[duration=([^,]+)]]></duration>
+    <mediaUrl><![CDATA[cr_video_url=([^\$]+)]]></mediaUrl>
+    <jsCode><![CDATA[
+        try {
+            //https://news.heytapdownload.com/document/15wZHJnoD4s.html?
+            //https://l.opdwz.cn/feeds/HWf2zDubzs?from=videoDetail -> https://news.heytapdownload.com/document/TpW4v9m4c8.html?
+            var docInfo = window.pageData.DOCINFO;
+            var thumbnail =  docInfo.coverUrl;
+            if (thumbnail.indexOf('?') != -1)
+                thumbnail = thumbnail.substring(0, thumbnail.indexOf('?'));
+            document.body.innerHTML = 'title=\"' + docInfo.title + '\",thumbnail=' + thumbnail + ',duration=' + docInfo.videoDetail.duration + ',cr_video_url=' + docInfo.sourceUrl + '$';
+        }
+        catch (ex) {
+        }
+    ]]></jsCode>
+</parser>

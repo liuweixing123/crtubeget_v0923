@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<parser delay="1500" crpj="true" date="2023.10.26">
+    <url><![CDATA[https?://(?:\w+\.)?snssdk\.com/.*?/toutiao/(?<id>[^?]+)]]></url>
+    <title><![CDATA[title="([^"]+)]]></title>
+    <thumbnail><![CDATA[thumbnail=([^,]+)]]></thumbnail>
+    <duration><![CDATA[duration=([^,]+)]]></duration>
+    <mediaUrl><![CDATA[cr_video_url=([^\$]+)]]></mediaUrl>
+    <jsCode><![CDATA[
+        try {
+            //某类用户需要...
+            //https://i.snssdk.com/video/code/1/toutiao/v0d033g10000ckr4knjc77u8tfkmv5g0?auto_play=1
+            var url = window.external.url;
+            var vid = url.match(/toutiao\/([^?]+)/)[1];
+            var api_url = 'https://i.snssdk.com/video/urls/1/toutiao/mp4/' + vid + '?callback=';
+            var data = window.external.getHtmlCode(api_url, url);
+            var jo = JSON.parse(data);
+            var thumbnail = jo.data.poster_url;
+            var duration = jo.data.video_duration;
+            var video_url = '';
+            var vq = parseInt((window.external.vq && window.external.vq.match(/\d+/) ? window.external.vq : '1080').match(/\d+/)[0]);
+            //无480，取540
+            if (vq == 480)
+                vq = 540;
+            for (var i in jo.data.video_list) {
+                var item = jo.data.video_list[i];
+                video_url = atob(item.main_url);
+                if (item.definition == vq + 'p')
+                    break;
+            }
+
+            document.body.innerHTML = 'title=\"' + vid + '\",thumbnail=' + thumbnail + ',duration=' + duration + ',cr_video_url=' + video_url + '$';
+        }
+        catch (ex) {
+        }
+    ]]></jsCode>
+</parser>
